@@ -168,9 +168,9 @@ endpoints HTTP y decidir automáticamente si se debe generar una alerta.
 **Flujo:**
 
 ```text
-                                    ┌─▶ generar_alerta ───────┐
-verificar_endpoints → evaluar_estado_general                  ├─▶ generar_reporte_monitoreo
-                                    └─▶ registrar_estado_ok ──┘
+                                     ┌─▶ generar_alerta ───────┐
+verificar_endpoints → evaluar_estado_general                    ├─▶ generar_reporte_monitoreo
+                                     └─▶ registrar_estado_ok ──┘
 ```
 
 | Tarea | Operador | Qué hace |

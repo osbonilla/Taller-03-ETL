@@ -27,15 +27,15 @@ sobre Docker Compose, con PostgreSQL como almacenamiento.
    Fuentes de datos                 Ingestion / Transform            Almacenamiento
  (API REST, archivos       ─▶     (Python + pandas, dentro    ─▶    PostgreSQL
   generados, Postgres)              de cada task de Airflow)         
-                                              │
-                                              ▼
+                                               │
+                                               ▼
                                   Apache Airflow (orquestación)
                                   scheduler + dag-processor +
                                      api-server + triggerer
-                                              │
-                                              ▼
-                                 Logs, historial de ejecución y
-                                    UI web (localhost:8080)
+                                               │
+                                               ▼
+                                  Logs, historial de ejecución y
+                                     UI web (localhost:8080)
 ```
 
 Cada DAG, cubre un tramo distinto de ese flujo general (extracción vía API,

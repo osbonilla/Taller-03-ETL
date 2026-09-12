@@ -26,7 +26,7 @@ sobre Docker Compose, con PostgreSQL como almacenamiento.
 ```text
    Fuentes de datos                 Ingestion / Transform            Almacenamiento
  (API REST, archivos       ─▶     (Python + pandas, dentro    ─▶    PostgreSQL
-  generados, Postgres)              de cada task de Airflow)         
+  generados, Postgres)             de cada task de Airflow)         
                                                │
                                                ▼
                                   Apache Airflow (orquestación)

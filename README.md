@@ -1,4 +1,4 @@
-# Taller 03 — ETL: 5 DAGs en Apache Airflow
+# Taller 03 — ETL: DAGs en Apache Airflow
 
 **Evelyn Nathaly Bermeo Granda**
 

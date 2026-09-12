@@ -16,7 +16,6 @@ sobre Docker Compose, con PostgreSQL como almacenamiento.
 - [Los 5 DAGs](#los-5-dags)
 - [Cómo ejecutar el proyecto](#cómo-ejecutar-el-proyecto)
 - [Cómo probar cada DAG desde la UI](#cómo-probar-cada-dag-desde-la-ui)
-- [Validación automática incluida](#validación-automática-incluida)
 - [Errores comunes](#errores-comunes)
 
 ---

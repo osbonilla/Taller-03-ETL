@@ -1,0 +1,39 @@
+# Variables de entorno reales (creadas a partir de .env.example)
+.env
+
+# Artefactos que genera Airflow al levantar el entorno con Docker
+logs/
+plugins/
+dags/__pycache__/
+dags/**/__pycache__/
+
+# Datos generados por los propios DAGs en tiempo de ejecucion. Se conserva la
+# estructura de carpetas gracias a los archivos .gitkeep, pero no su
+# contenido (es reproducible con solo correr los DAGs).
+data/raw/*
+data/raw/incoming/*
+data/processed/*
+data/quarantine/*
+data/backups/*
+!data/raw/.gitkeep
+!data/raw/incoming/.gitkeep
+!data/processed/.gitkeep
+!data/quarantine/.gitkeep
+!data/backups/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Sistema operativo / editores
+.DS_Store
+.vscode/
+.idea/
+
+# Bases de datos locales (si se llegara a probar Airflow con SQLite fuera de Docker)
+*.db
+airflow.db
+airflow-webserver.pid

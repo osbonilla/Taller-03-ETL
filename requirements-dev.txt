@@ -1,0 +1,13 @@
+# Dependencias para DESARROLLO LOCAL y pruebas (tests/), fuera del contenedor
+# Docker. El contenedor ya trae apache-airflow incluido en la imagen base; en
+# una maquina local hace falta instalarlo explicitamente para poder ejecutar
+# `pytest` o `airflow dags test` sin levantar todo docker-compose.
+#
+# Instalacion (requiere Python 3.12):
+#   python3 -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements-dev.txt \
+#       --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.1/constraints-3.12.txt"
+
+-r requirements.txt
+apache-airflow[postgres]==3.3.1
+pytest==8.3.4

@@ -1,0 +1,172 @@
+# =============================================================================
+# Taller 03 - ETL con Apache Airflow
+# docker-compose.yml
+#
+# Adaptado de la referencia oficial de Apache Airflow 3.3.1
+# (https://airflow.apache.org/docs/apache-airflow/3.3.1/docker-compose.yaml),
+# simplificado para un taller educativo:
+#
+#   - Executor: LocalExecutor en lugar de CeleryExecutor. Con 5 DAGs y un
+#     volumen de ejecuciones pequeño no se necesita un pool distribuido de
+#     workers; LocalExecutor ya ejecuta tareas en paralelo (varios procesos
+#     en la misma maquina), que es exactamente lo que demuestra el DAG 5.
+#     Esto evita sumar Redis y el servicio "worker" (menos partes moviles).
+#   - Un unico PostgreSQL: se usa la misma instancia para los metadatos de
+#     Airflow (base "airflow") y para los datos de negocio de los DAGs
+#     (esquema "taller" dentro de esa misma base, ver sql/init.sql). Levantar
+#     un segundo motor de base de datos solo para el taller seria complejidad
+#     innecesaria.
+#
+# ADVERTENCIA: esta configuracion es para uso local/educativo, igual que la
+# referencia oficial en la que se basa. No esta pensada para producción
+# (contraseñas de ejemplo, sin TLS, un solo nodo, etc.).
+#
+# Uso:
+#   cp .env.example .env   # y ajustar AIRFLOW_UID si es necesario (ver README)
+#   docker compose up -d
+#   Abrir http://localhost:8080  (usuario/clave por defecto: airflow / airflow)
+# =============================================================================
+---
+x-airflow-common:
+  &airflow-common
+  build: .
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY}
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-airflow_jwt_secret_taller_03}
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    # Conexion de negocio que usan los 5 DAGs (ver dags/common.py). Se
+    # reutiliza el mismo servidor Postgres, esquema "taller".
+    AIRFLOW_CONN_POSTGRES_TALLER: postgresql://airflow:airflow@postgres:5432/airflow
+    TALLER_DATA_DIR: /opt/airflow/data
+  volumes:
+    - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
+    - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
+    - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    &airflow-common-depends-on
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+      # Se ejecuta una unica vez, cuando el volumen de datos esta vacio:
+      # crea el esquema "taller" y sus tablas (ver sql/init.sql).
+      - ${AIRFLOW_PROJ_DIR:-.}/sql/init.sql:/docker-entrypoint-initdb.d/init_taller_schema.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
+  airflow-apiserver:
+    <<: *airflow-common
+    command: api-server
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-triggerer:
+    <<: *airflow-common
+    command: triggerer
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        mkdir -v -p /opt/airflow/{logs,dags,plugins,data}
+        chown -R "${AIRFLOW_UID:-50000}:0" /opt/airflow/
+        exec /entrypoint airflow version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+    user: "0:0"
+
+  # Utilidad opcional para ejecutar comandos sueltos de la CLI de Airflow,
+  # por ejemplo: docker compose run --rm airflow-cli airflow dags list
+  airflow-cli:
+    <<: *airflow-common
+    profiles:
+      - debug
+    environment:
+      <<: *airflow-common-env
+      CONNECTION_CHECK_MAX_COUNT: "0"
+    command:
+      - bash
+      - -c
+      - airflow
+
+volumes:
+  postgres-db-volume:

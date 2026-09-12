@@ -1,7 +1,10 @@
 # Taller 03 — ETL: 5 DAGs en Apache Airflow
 
-Repositorio del taller *"Crear e implementar 5 DAGs en Apache Airflow"*. Contiene
-cinco pipelines de datos independientes, cada uno con al menos tres tareas
+**Evelyn Nathaly Bermeo Granda**
+
+**Oldrin Santiago Bonilla Cáceres**
+
+Contiene cinco pipelines de datos independientes, cada uno con al menos tres tareas
 interconectadas en una secuencia lógica, orquestados con Apache Airflow 3.3.1
 sobre Docker Compose, con PostgreSQL como almacenamiento.
 
@@ -286,32 +289,6 @@ docker compose down
 6. Repetir el disparo un par de veces para poblar el **historial de
    ejecuciones** (columna izquierda de la vista Grid), que es evidencia de
    que el DAG corre de forma consistente.
-
-## Validación automática incluida
-
-Además de las pruebas manuales desde la UI, el repositorio incluye una
-suite de `pytest` (`tests/test_dag_logic.py`) que verifica, sin necesidad de
-levantar Airflow completo:
-
-- La lógica pura de negocio (por ejemplo, la clasificación de temperatura).
-- Que los cinco DAGs expongan el `dag_id` esperado y **al menos tres
-  tareas** (requisito del taller).
-- Que las dependencias clave estén bien formadas (la rama del DAG 3, el
-  fan-in del DAG 5).
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt \
-  --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.1/constraints-3.12.txt"
-scripts/run_tests.sh
-```
-
-También puede verificarse que los cinco DAGs no tengan errores de
-importación directamente dentro del contenedor:
-
-```bash
-docker compose run --rm airflow-cli bash scripts/verificar_dags.sh
-```
 
 ## Errores comunes
 

@@ -26,7 +26,7 @@ sobre Docker Compose, con PostgreSQL como almacenamiento.
 ```text
    Fuentes de datos                 Ingestion / Transform            Almacenamiento
  (API REST, archivos       ─▶     (Python + pandas, dentro    ─▶    PostgreSQL
-  generados, Postgres)              de cada task de Airflow)         (esquema "taller")
+  generados, Postgres)              de cada task de Airflow)         
                                             │
                                             ▼
                                   Apache Airflow (orquestación)
@@ -38,7 +38,7 @@ sobre Docker Compose, con PostgreSQL como almacenamiento.
                                 UI web (localhost:8080)
 ```
 
-Cada DAG cubre un tramo distinto de ese flujo general (extracción vía API,
+Cada DAG, cubre un tramo distinto de ese flujo general (extracción vía API,
 limpieza con pandas, validación de calidad, carga a PostgreSQL, mantenimiento),
 de modo que entre los cinco se cubre el ciclo completo que pide el taller.
 
